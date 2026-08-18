@@ -4,7 +4,24 @@ An AI agent calls insurance companies. Before it can say anything useful it
 has to know one thing: **who is on the other end right now?** An automated
 menu, a live person, or hold music — and whether it just got transferred.
 
-This repo has two parts that do opposite jobs.
+## Why this is two systems, not one
+
+Large audio models solve the accuracy half of this problem well. Gemini Flash
+and GPT-audio both identify IVR and human reliably on real payer calls — they
+hear the whole recording, reason over it, and get it right.
+
+They cannot be used during the call. Each request sends the entire audio and
+waits for a complete answer, which means:
+
+- you need the call to be **over** before you can start
+- every request is a **network round trip**, seconds of it
+- you **pay per call**, forever
+- the audio **leaves your infrastructure** — these are health-care calls
+
+So accuracy is available but latency is not, and a voice agent needs the
+answer while the person is still talking.
+
+That splits the work in two:
 
 ```
    REAL CALLS
@@ -12,13 +29,19 @@ This repo has two parts that do opposite jobs.
        +---------------------------+
        v                           v
   golden_dataset              live_call_pred
-  offline, costs money        live, free, local
-  makes the answer key        is scored against it
+                                          
+  big models, offline         small local model, live
+  slow, costs money           fast, free, no network
+  accurate                    still catching up
+       |                           ^
+       +------ teaches ------------+
 ```
 
-They are not alternatives. One builds the ruler, the other is measured by it.
+**The big models are the teacher. The live pipeline is the student.** We use
+the expensive, accurate, slow path to produce labelled data, and spend that
+data making a cheap, fast path good enough to run during the call.
 
----
+This repo is both halves.
 
 ## The main design decision
 
@@ -243,22 +266,36 @@ variance. One component costs roughly 400x the rest combined.
 - **Speaker identity is assigned during hold and IVR.** Transfers are detected
   by noticing the speaker changed, so a phantom speaker registered on hold
   music makes a genuine handoff look like the same person continuing.
-- **The answer key hears both channels; the predictor hears one.** The
-  labelers get the full stereo file, so our own agent's speech is in their
-  input. The predictor correctly ignores that channel and is marked wrong for
-  it. This caps the measured number regardless of how good the pipeline gets.
 - **23% of decisions still miss their latency budget.**
 
 ### What we would do next
 
-1. **Move speech recognition off the critical path** — run it alongside the
-   decision loop, use the most recent words available, keep deciding on sound
-   when they are stale. Turns a hard stall into graceful degradation.
-2. **Re-label channel 0 only**, so both sides answer the same question.
-3. **Require positive evidence for `human`.**
-4. **Label 20–50 real calls and train on those.** The machinery exists
-   (feature capture, split-by-call, calibration); the data does not. This is
-   what would move 36% substantially.
+**1. Distil the big models into a small one.** This is the main line of work.
+Gemini Flash and GPT-audio already produce the right answers; they are just
+too slow and too expensive to call live. Every labelled call is a worked
+example of what the fast path should have said. With enough of them, finetune
+a small model — a compact audio encoder, or a small language model over the
+transcript plus acoustic features — that runs locally in milliseconds.
+
+The point is not to beat the big models. It is to get close enough while
+being **hundreds of times faster and free per call**. The pipeline is already
+built to accept this: the state head sits behind one interface with three
+implementations, so a trained model drops in without touching anything
+around it.
+
+**2. Move speech recognition off the critical path.** It costs roughly 400x
+everything else combined and is the only thing breaking the latency budget.
+Run it alongside the decision loop, use the most recent words available, and
+keep deciding on sound when they are stale. That turns a hard stall into
+graceful degradation.
+
+**3. Keep growing the labelled set.** 10 minutes is enough to expose bugs and
+nowhere near enough to train on. 20–50 calls is the target. The labelling
+pipeline exists precisely so this is cheap to do.
+
+**4. Smaller fixes** — require positive evidence for `human` rather than
+letting it be the leftover bucket; stop registering speaker identity during
+hold and IVR.
 
 ### On the synthetic numbers
 
