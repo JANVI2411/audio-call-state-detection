@@ -1,0 +1,10 @@
+google-genai>=0.5.0
+openai>=1.40.0
+datasets>=2.20.0
+huggingface_hub>=0.24.0
+soundfile
+pydub
+numpy
+gradio>=4.40.0
+librosa
+faster-whisper

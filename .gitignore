@@ -1,0 +1,39 @@
+# --- secrets -----------------------------------------------------------
+# Never commit real keys. .env.example documents the names instead.
+.env
+.env.*
+!.env.example
+*.key
+*credentials*.json
+
+# --- real call data ----------------------------------------------------
+# These are recordings of real health-care calls. The audio is redacted
+# ("beeped") but the TRANSCRIPTS derived from it are not, so anything
+# containing recognised words is excluded too.
+*.wav
+*.mp3
+*.m4a
+*.flac
+golden_dataset/input/
+golden_dataset/chunks/
+golden_dataset/gold/
+live_call_pred/out/
+live_call_pred/logs/
+live_call_pred/data/
+
+# --- trained weights ---------------------------------------------------
+# Fitted on synthetic audio; regenerate with scripts/train_fusion.py.
+*.npz
+
+# --- environments and caches ------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+uv.lock
+
+cmd.txt
+temp.txt
+voice_agent/

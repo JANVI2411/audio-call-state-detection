@@ -1,0 +1,57 @@
+{
+  "corpus": "data/synthetic",
+  "train_calls": [
+    "failed_transfer_0.wav",
+    "failed_transfer_1.wav",
+    "failed_transfer_4.wav",
+    "failed_transfer_5.wav",
+    "ivr_only_0.wav",
+    "ivr_only_1.wav",
+    "ivr_only_2.wav",
+    "ivr_only_3.wav",
+    "simple_0.wav",
+    "simple_1.wav",
+    "simple_4.wav",
+    "simple_5.wav",
+    "transfer_0.wav",
+    "transfer_1.wav",
+    "transfer_2.wav",
+    "transfer_3.wav"
+  ],
+  "holdout_calls": [
+    "failed_transfer_2.wav",
+    "failed_transfer_3.wav",
+    "ivr_only_4.wav",
+    "ivr_only_5.wav",
+    "simple_2.wav",
+    "simple_3.wav",
+    "transfer_4.wav",
+    "transfer_5.wav"
+  ],
+  "config_fingerprint": "9e332c045404",
+  "temperature": 0.8500000000000003,
+  "train": {
+    "accuracy": 0.9988,
+    "macro_f1": 0.9988,
+    "ece": 0.0082,
+    "n": 1648
+  },
+  "holdout": {
+    "accuracy": 0.9834,
+    "macro_f1": 0.9784,
+    "ece": 0.004,
+    "n": 845
+  },
+  "holdout_before_temperature": {
+    "accuracy": 0.9834,
+    "macro_f1": 0.9784,
+    "ece": 0.0079,
+    "n": 845
+  },
+  "train_before_temperature": {
+    "accuracy": 0.9988,
+    "macro_f1": 0.9988,
+    "ece": 0.0125,
+    "n": 1648
+  }
+}
