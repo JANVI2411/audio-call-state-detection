@@ -131,12 +131,6 @@ Four rules that came out of real failures:
 | Ties are flagged and sent to a human | `Counter.most_common` returned whichever label was inserted first — the tie went to whoever happened to be first in the list |
 | Merge only on same label **and** same speaker | Merging on label alone collapsed thirteen turns between two people into one `human` block, hiding a transfer |
 
-Speaker identity is never voted on directly — one model's `human_1` makes no
-promise of being another's. What *is* comparable is whether a labeler thinks
-the speaker **changed**, and that is the only thing voted on. A labeler whose
-speaker id never varies is excluded, since it is naming the channel rather
-than identifying anyone.
-
 ### Run it
 
 ```bash
@@ -188,26 +182,6 @@ never looks ahead.
 **No layer is allowed to be the final answer.** "Music is present" never
 directly means `hold`, because announcements are routinely played *over* hold
 music. Evidence goes up; the decision comes down.
-
-### Things that are not obvious
-
-**Two window lengths, for a physical reason.** Music is identified by a very
-slow rhythm (0.05–1.2 Hz), and a 2.5 s window can only resolve to about
-0.4 Hz — the band simply is not measurable in it. One short window for
-everything drove hold detection to **zero**. One long window made boundary
-detection ~1.5 s late. So fast signals read 2.5 s, the music band reads 6 s.
-
-**Silence-based segmentation.** Instead of deciding on a fixed clock, cut at
-silence gaps — capped at 8 s, because a pure silence trigger learns nothing
-for as long as someone keeps talking, and hold music contains no silence at
-all. Measured effect: same accuracy, **half the compute, peak backlog 32 s ->
-4 s, and the call ends level instead of 10 s behind.**
-
-**Speech recognition is gated.** Whisper's own speech filter was off, so on
-non-speech it hallucinated (`"You"`, `"You You"`, `"Thank you."`) and spent up
-to **30 seconds** on a single 3-second window. Turning it on, and skipping
-recognition entirely when the acoustic branch already says there is no
-speech, fixed both the stalls and the garbage text.
 
 ### Run it
 
